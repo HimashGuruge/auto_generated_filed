@@ -7,7 +7,7 @@ function AddUser() {
     name: "",
     email: "",
     age: "",
-    role: "user",  // default role
+    role: "user", // default role
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -27,7 +27,7 @@ function AddUser() {
 
     try {
       const response = await axios.post("http://localhost:3000/users", formData);
-      setMessage({ type: "success", text: "User added successfully!" });
+      setMessage({ type: "success", text: response.data.message || "User added successfully!" });
       setFormData({ username: "", name: "", email: "", age: "", role: "user" });
     } catch (error) {
       setMessage({
@@ -47,14 +47,16 @@ function AddUser() {
       {message && (
         <div
           className={`mb-4 p-3 rounded ${
-            message.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+            message.type === "success"
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
           }`}
         >
           {message.text}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div>
           <label className="block mb-1 font-medium text-gray-700">Username</label>
           <input
@@ -63,8 +65,8 @@ function AddUser() {
             value={formData.username}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter username"
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -76,8 +78,8 @@ function AddUser() {
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter full name"
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -89,8 +91,8 @@ function AddUser() {
             value={formData.email}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter email"
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -102,12 +104,11 @@ function AddUser() {
             value={formData.age}
             onChange={handleChange}
             min="0"
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter age (optional)"
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        {/* New Role select input */}
         <div>
           <label className="block mb-1 font-medium text-gray-700">Role</label>
           <select

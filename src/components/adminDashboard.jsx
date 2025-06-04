@@ -43,7 +43,7 @@ function AdminDashboard() {
             </Link>
           </li>
           <li>
-            <Link to="add-user" className="block hover:bg-gray-700 px-3 py-2 rounded">
+            <Link to="/admin/add-user" className="block hover:bg-gray-700 px-3 py-2 rounded">
               ➕ Add User
             </Link>
           </li>
