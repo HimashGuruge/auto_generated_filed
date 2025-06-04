@@ -1,21 +1,9 @@
 import { Link, Routes, Route, Navigate } from "react-router-dom";
+import UserList from "../components/UserList.jsx";
+import AddUser from "../components/Adduser.jsx";
 
-// Dummy components for each dashboard page
-function UserList() {
-  return <div>User List Page</div>;
-}
 
-function AddUser() {
-  return <div>Add User Page</div>;
-}
 
-function Analytics() {
-  return <div>Analytics Page</div>;
-}
-
-function Settings() {
-  return <div>Settings Page</div>;
-}
 
 function DashboardHome() {
   return (
@@ -76,11 +64,12 @@ function AdminDashboard() {
       <main className="flex-1 p-6 bg-gray-100">
         <Routes>
           {/* Redirect from /admin to /admin/home or default */}
-          <Route index element={<DashboardHome />} />
+        
           <Route path="users" element={ <UserList/>  } />
-          <Route path="add-user" element={<AddUser />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="add-user" element={ <AddUser/>  } />
+         
+        
+        
           {/* Catch-all: Redirect unknown admin routes to dashboard home */}
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
