@@ -1,24 +1,23 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import UserSearch from './components/Registor'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Toolbar'; // හරි file name එක check කරන්න
+import AdminDashboard from './components/adminDashboard';
+
+
 
 function App() {
-
-
   return (
-    <>
-     
-
-    <UserSearch />
-
-
-
-
-
-    </>
-  )
+    <Router>
+      <Navbar />
+   
+        <Routes>
+        
+        <Route path="/admin/*" element={<AdminDashboard />} />
+        
+         
+        </Routes>
+    
+    </Router>
+  );
 }
 
-export default App
+export default App;
