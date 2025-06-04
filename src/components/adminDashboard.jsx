@@ -1,6 +1,7 @@
 import { Link, Routes, Route, Navigate } from "react-router-dom";
 import UserList from "../components/UserList.jsx";
 import AddUser from "../components/Adduser.jsx";
+import Delete from "../components/DeletePage.jsx";
 
 
 
@@ -53,7 +54,7 @@ function AdminDashboard() {
             </Link>
           </li>
           <li>
-            <Link to="settings" className="block hover:bg-gray-700 px-3 py-2 rounded">
+            <Link to="/admin/settings" className="block hover:bg-gray-700 px-3 py-2 rounded">
               ⚙️ Settings
             </Link>
           </li>
@@ -67,6 +68,7 @@ function AdminDashboard() {
         
           <Route path="users" element={ <UserList/>  } />
           <Route path="add-user" element={ <AddUser/>  } />
+          <Route path="settings" element={ <Delete/>  } />
          
         
         
