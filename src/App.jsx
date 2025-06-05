@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Toolbar from "./components/Toolbar.jsx";
 import Home from "./components/Home.jsx";
 import Regitor from "./components/Registor.jsx";
+import Login from "./components/Login.jsx";
 
 // Lazy Load Admin Dashboard
 const AdminDashboard = lazy(() => import("./components/AdminDashboard.jsx"));
@@ -42,6 +43,14 @@ function AnimatedRoutes() {
             <Regitor />
           </PageLayout>
         } />
+
+
+        <Route path="/login" element={
+          <PageLayout>
+            < Login />
+          </PageLayout>
+        } />
+
       </Routes>
     </AnimatePresence>
   );
