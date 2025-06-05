@@ -5,28 +5,34 @@ function HomePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="max-w-4xl mx-auto mt-20 p-6 bg-white rounded shadow text-center">
-      <h1 className="text-4xl font-bold mb-6">Welcome to the User Management System</h1>
-      <p className="mb-6 text-lg text-gray-700">
-        Manage your users easily by viewing, editing, and deleting user accounts.
-      </p>
+    <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+      <section className="max-w-3xl w-full bg-white rounded-lg shadow-lg p-10 text-center">
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-8">
+          Welcome to the User Management System
+        </h1>
+        <p className="text-lg text-gray-600 mb-10">
+          Manage your users easily by viewing, editing, and deleting user accounts.
+        </p>
 
-      <div className="space-x-4">
-        <button
-          onClick={() => navigate('/users')}
-          className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          View Users
-        </button>
+        <div className="flex justify-center gap-6">
+          <button
+            onClick={() => navigate('/users')}
+            className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-300"
+            aria-label="Navigate to User List"
+          >
+            View Users
+          </button>
 
-        <button
-          onClick={() => navigate('/about')}
-          className="px-6 py-3 bg-gray-600 text-white rounded hover:bg-gray-700"
-        >
-          About
-        </button>
-      </div>
-    </div>
+          <button
+            onClick={() => navigate('/about')}
+            className="px-8 py-3 bg-gray-600 text-white rounded-lg font-semibold shadow hover:bg-gray-700 transition focus:outline-none focus:ring-4 focus:ring-gray-400"
+            aria-label="Navigate to About Page"
+          >
+            About
+          </button>
+        </div>
+      </section>
+    </main>
   );
 }
 

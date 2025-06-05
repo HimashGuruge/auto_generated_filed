@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 function AddUser() {
@@ -7,10 +7,21 @@ function AddUser() {
     name: "",
     email: "",
     age: "",
-    role: "user", // default role
+    role: "user",
   });
-  const [loading, setLoading] = useState(false);
+
+  const [submitting, setSubmitting] = useState(false); // form submit loading
+  const [initialLoading, setInitialLoading] = useState(true); // page load delay
   const [message, setMessage] = useState(null);
+
+  useEffect(() => {
+    // Delay to avoid blank screen during animation
+    const timer = setTimeout(() => {
+      setInitialLoading(false);
+    }, 200); // 200ms smooth transition delay
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,10 +33,13 @@ function AddUser() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     setMessage(null);
 
     try {
+      // Artificial delay 1.5 seconds to keep spinner visible
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       const response = await axios.post("http://localhost:3000/users", formData);
       setMessage({ type: "success", text: response.data.message || "User added successfully!" });
       setFormData({ username: "", name: "", email: "", age: "", role: "user" });
@@ -36,9 +50,26 @@ function AddUser() {
       });
       console.error(error);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+
+  // Initial page load skeleton
+  if (initialLoading) {
+    return (
+      <div className="max-w-md mx-auto mt-8 p-6">
+        <div className="space-y-4 animate-pulse">
+          <div className="h-6 bg-gray-300 rounded w-1/3" />
+          <div className="h-10 bg-gray-200 rounded" />
+          <div className="h-10 bg-gray-200 rounded" />
+          <div className="h-10 bg-gray-200 rounded" />
+          <div className="h-10 bg-gray-200 rounded" />
+          <div className="h-10 bg-gray-200 rounded" />
+          <div className="h-10 bg-blue-300 rounded" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded shadow mt-8">
@@ -125,37 +156,36 @@ function AddUser() {
         </div>
 
         <button
-  type="submit"
-  disabled={loading}
-  className={`w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition flex justify-center items-center ${
-    loading ? "opacity-60 cursor-not-allowed" : ""
-  }`}
->
-  {loading && (
-    <svg
-      className="animate-spin mr-2 h-5 w-5 text-white"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-      />
-    </svg>
-  )}
-  {loading ? "Adding..." : "Add User"}
-</button>
-
+          type="submit"
+          disabled={submitting}
+          className={`w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition flex justify-center items-center ${
+            submitting ? "opacity-60 cursor-not-allowed" : ""
+          }`}
+        >
+          {submitting && (
+            <svg
+              className="animate-spin mr-2 h-5 w-5 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              />
+            </svg>
+          )}
+          {submitting ? "Adding..." : "Add User"}
+        </button>
       </form>
     </div>
   );

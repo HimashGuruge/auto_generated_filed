@@ -1,24 +1,29 @@
 import { useState, useEffect } from "react";
 import { Link, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+
 import UserList from "../components/UserList.jsx";
-import AddUser from "../components/AddUser.jsx";
+import AddUser from "../components/Adduser.jsx";
 import Delete from "../components/DeletePage.jsx";
+
 import { FiUsers, FiUserPlus, FiSettings, FiLogOut, FiHome } from "react-icons/fi";
 
+const variants = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
+};
+
 function AdminDashboard() {
-  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("users");
   const location = useLocation();
 
   useEffect(() => {
-    setLoading(false);
-    // Set active tab based on current route
     const currentTab = location.pathname.split("/").pop();
     setActiveTab(currentTab);
   }, [location]);
 
   const handleClick = (tab) => {
-    setLoading(true);
     setActiveTab(tab);
   };
 
@@ -30,7 +35,7 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen flex bg-gray-50">
-      {/* Sidebar */}
+      {/* Sidebar - Static no animation */}
       <aside className="w-64 bg-gray-800 text-white flex flex-col">
         <div className="p-4">
           <h2 className="text-xl font-bold flex items-center">
@@ -40,14 +45,14 @@ function AdminDashboard() {
             Admin Panel
           </h2>
         </div>
-        
+
         <nav className="flex-1 px-2 space-y-1">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={`/admin/${item.path}`}
               onClick={() => handleClick(item.path)}
-              className={`flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors ${
+              className={`flex items-center px-3 py-3 text-sm font-medium rounded-md ${
                 activeTab === item.path
                   ? "bg-gray-900 text-white"
                   : "text-gray-300 hover:bg-gray-700 hover:text-white"
@@ -60,16 +65,15 @@ function AdminDashboard() {
         </nav>
 
         <div className="p-4 border-t border-gray-700">
-          <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors">
+          <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md">
             <FiLogOut className="mr-2" />
             Logout
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Main Content with animation on route switch */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
         <header className="bg-white shadow-sm">
           <div className="px-6 py-4 flex justify-between items-center">
             <h1 className="text-xl font-semibold text-gray-800 capitalize">
@@ -100,46 +104,54 @@ function AdminDashboard() {
           </div>
         </header>
 
-        {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-6 relative">
-          {/* Loading overlay */}
-          {loading && (
-            <div className="absolute inset-0 bg-white bg-opacity-70 flex justify-center items-center z-50">
-              <div className="text-center">
-                <svg
-                  className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                  />
-                </svg>
-                <p className="text-gray-600">Loading content...</p>
-              </div>
-            </div>
-          )}
-
-          {/* Content */}
-          <div className={loading ? "opacity-30 pointer-events-none" : ""}>
-            <Routes>
-              <Route path="users" element={<UserList />} />
-              <Route path="add-user" element={<AddUser />} />
-              <Route path="settings" element={<Delete />} />
+          <AnimatePresence mode="wait" initial={false}>
+            <Routes location={location} key={location.pathname}>
+              <Route
+                path="users"
+                element={
+                  <motion.div
+                    variants={variants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={{ duration: 0.3 }}
+                  >
+                    <UserList />
+                  </motion.div>
+                }
+              />
+              <Route
+                path="add-user"
+                element={
+                  <motion.div
+                    variants={variants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={{ duration: 0.3 }}
+                  >
+                    <AddUser />
+                  </motion.div>
+                }
+              />
+              <Route
+                path="settings"
+                element={
+                  <motion.div
+                    variants={variants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Delete />
+                  </motion.div>
+                }
+              />
               <Route path="*" element={<Navigate to="/admin/users" replace />} />
             </Routes>
-          </div>
+          </AnimatePresence>
         </div>
       </main>
     </div>

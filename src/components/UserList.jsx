@@ -4,27 +4,64 @@ import axios from "axios";
 function UserTable() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchUsers() {
+    async function fetchData() {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await axios.get("http://localhost:3000/users");
-        setUsers(response.data);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
+        const [usersRes, adminsRes] = await Promise.all([
+          axios.get("http://localhost:3000/users"),
+          axios.get("http://localhost:3000/admins"),
+        ]);
+        // Combine users and admins arrays
+        const combined = [...usersRes.data, ...adminsRes.data];
+        setUsers(combined);
+      } catch (err) {
+        setError("Failed to load users and admins.");
+        console.error(err);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchUsers();
+    fetchData();
   }, []);
 
   if (loading) {
     return (
-      <p className="text-center text-gray-500 mt-10 text-lg font-semibold">
-        Loading users...
-      </p>
+      <div className="flex justify-center items-center h-40">
+        <svg
+          className="animate-spin h-10 w-10 text-blue-600"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          aria-label="Loading spinner"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+          />
+        </svg>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-600 font-semibold mt-10">
+        {error}
+      </div>
     );
   }
 
@@ -50,7 +87,7 @@ function UserTable() {
                 colSpan="4"
                 className="text-center py-8 text-gray-400 italic font-semibold"
               >
-                No users found.
+                No users or admins found.
               </td>
             </tr>
           ) : (

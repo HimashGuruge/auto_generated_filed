@@ -20,35 +20,40 @@ const RegisterForm = () => {
 
   const isUsernameDisabled = formData.name.trim() === '';
 
-  // Generate usernames from name
+  // Username suggestions generate කිරීම
   const generateUsernames = useCallback((name) => {
     const base = name.toLowerCase().trim().replace(/\s+/g, '');
-    return Array.from({ length: 3 }, (_, i) => base + (100 + Math.floor(Math.random() * 900)));
+    return Array.from({ length: 3 }, () => base + (100 + Math.floor(Math.random() * 900)));
   }, []);
 
-  // Debounced email validation
-  const checkEmailExists = useCallback(debounce(async (email) => {
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailStatus({ loading: false, exists: false, valid: false });
-      return;
-    }
+  // Debounced email check with cleanup
+  const checkEmailExists = useCallback(
+    debounce(async (email) => {
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setEmailStatus({ loading: false, exists: false, valid: false });
+        return;
+      }
 
-    setEmailStatus(prev => ({ ...prev, loading: true }));
-    try {
-      const response = await fetch(`http://localhost:3000/users/check-email?email=${encodeURIComponent(email)}`);
-      const data = await response.json();
-      setEmailStatus({
-        loading: false,
-        exists: data.exists,
-        valid: true
-      });
-    } catch (err) {
-      setEmailStatus(prev => ({ ...prev, loading: false }));
-      console.error('Email check failed:', err);
-    }
-  }, 500), []);
+      setEmailStatus(prev => ({ ...prev, loading: true }));
 
-  // Update suggestions when name changes
+      try {
+        const response = await fetch(`http://localhost:3000/users/check-email?email=${encodeURIComponent(email)}`);
+        const data = await response.json();
+
+        setEmailStatus({
+          loading: false,
+          exists: data.exists,
+          valid: true
+        });
+      } catch (err) {
+        setEmailStatus(prev => ({ ...prev, loading: false }));
+        console.error('Email check failed:', err);
+      }
+    }, 500),
+    []
+  );
+
+  // name වෙනස්වීමත් සමග username suggestions update කිරීම
   useEffect(() => {
     if (formData.name.trim() === '') {
       setSuggestedUsernames([]);
@@ -56,34 +61,50 @@ const RegisterForm = () => {
     } else {
       const suggestions = generateUsernames(formData.name);
       setSuggestedUsernames(suggestions);
-      if (formData.username === '' || isUsernameDisabled) {
+
+      if (
+        formData.username === '' || 
+        suggestedUsernames.includes(formData.username)
+      ) {
         setFormData(prev => ({ ...prev, username: suggestions[0] }));
       }
     }
-  }, [formData.name, generateUsernames, isUsernameDisabled]);
+  }, [formData.name, generateUsernames]); // suggestedUsernames remove කරලා dependency list එකෙන් (avoid infinite loop)
 
-  // Check email when it changes
+  // email වෙනස්වීම check කරන්න
   useEffect(() => {
     if (formData.email) {
       checkEmailExists(formData.email);
     } else {
       setEmailStatus({ loading: false, exists: false, valid: true });
     }
+
+    // Cleanup debounce on unmount or email change
+    return () => checkEmailExists.cancel();
   }, [formData.email, checkEmailExists]);
 
+  // form fields update handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // username suggestions click handler
   const handleUsernameClick = (username) => {
     setFormData(prev => ({ ...prev, username }));
   };
 
+  // form submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccess('');
     setError('');
+
+    // Age validation
+    if (formData.age && (isNaN(formData.age) || Number(formData.age) < 0)) {
+      setError('Age must be a positive number');
+      return;
+    }
 
     if (emailStatus.exists) {
       setError('Email already exists');
@@ -126,20 +147,18 @@ const RegisterForm = () => {
         <h2 className="text-2xl font-bold mb-6 text-center">Register User</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name Field */}
-          <div>
-            <input
-              type="text"
-              name="name"
-              placeholder="Full Name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
+          {/* Name */}
+          <input
+            type="text"
+            name="name"
+            placeholder="Full Name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
 
-          {/* Username Field */}
+          {/* Username */}
           <div>
             <input
               type="text"
@@ -152,7 +171,7 @@ const RegisterForm = () => {
                 ${isUsernameDisabled ? 'bg-gray-200 cursor-not-allowed' : 'bg-white cursor-text'}`}
               required
             />
-            
+
             {!isUsernameDisabled && suggestedUsernames.length > 0 && (
               <div className="mt-2">
                 <p className="text-sm text-gray-600 mb-1">Suggested usernames:</p>
@@ -176,53 +195,50 @@ const RegisterForm = () => {
             )}
           </div>
 
-          {/* Email Field */}
-          <div>
-            <div className="relative">
-              <input
-                type="email"
-                name="email"
-                placeholder="Email Address"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                  emailStatus.exists || !emailStatus.valid
-                    ? 'border-red-500 focus:ring-red-400 bg-red-50' 
-                    : 'focus:ring-blue-400'
-                }`}
-              />
-              {emailStatus.loading && (
-                <div className="absolute right-3 top-2.5">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
-                </div>
-              )}
-            </div>
-            
-            {emailStatus.loading && (
-              <p className="mt-1 text-gray-500 text-sm">Checking email availability...</p>
-            )}
-            {emailStatus.exists && (
-              <p className="mt-1 text-red-500 text-sm">This email is already registered</p>
-            )}
-            {!emailStatus.valid && formData.email && (
-              <p className="mt-1 text-red-500 text-sm">Please enter a valid email address</p>
-            )}
-          </div>
-
-          {/* Age Field */}
-          <div>
+          {/* Email */}
+          <div className="relative">
             <input
-              type="number"
-              name="age"
-              placeholder="Age (optional)"
-              value={formData.age}
+              type="email"
+              name="email"
+              placeholder="Email Address"
+              value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-              min="0"
+              required
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                emailStatus.exists || !emailStatus.valid
+                  ? 'border-red-500 focus:ring-red-400 bg-red-50'
+                  : 'focus:ring-blue-400'
+              }`}
             />
+            {emailStatus.loading && (
+              <div className="absolute right-3 top-2.5">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
+              </div>
+            )}
           </div>
 
+          {emailStatus.loading && (
+            <p className="mt-1 text-gray-500 text-sm">Checking email availability...</p>
+          )}
+          {emailStatus.exists && (
+            <p className="mt-1 text-red-500 text-sm">This email is already registered</p>
+          )}
+          {!emailStatus.valid && formData.email && (
+            <p className="mt-1 text-red-500 text-sm">Please enter a valid email address</p>
+          )}
+
+          {/* Age */}
+          <input
+            type="number"
+            name="age"
+            placeholder="Age (optional)"
+            value={formData.age}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            min="0"
+          />
+
+          {/* Submit */}
           <button
             type="submit"
             disabled={emailStatus.exists || emailStatus.loading || !emailStatus.valid}
@@ -236,7 +252,7 @@ const RegisterForm = () => {
           </button>
         </form>
 
-        {/* Success and Error Messages */}
+        {/* Messages */}
         {success && <p className="mt-4 text-green-600 text-center">{success}</p>}
         {error && !emailStatus.exists && <p className="mt-4 text-red-600 text-center">{error}</p>}
       </div>
