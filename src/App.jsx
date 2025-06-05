@@ -7,6 +7,7 @@ import Toolbar from "./components/Toolbar.jsx";
 import Home from "./components/Home.jsx";
 import Regitor from "./components/Registor.jsx";
 import Login from "./components/Login.jsx";
+import Profile from "./components/Profile.jsx";
 
 // Lazy Load Admin Dashboard
 const AdminDashboard = lazy(() => import("./components/AdminDashboard.jsx"));
@@ -43,18 +44,21 @@ function AnimatedRoutes() {
             <Regitor />
           </PageLayout>
         } />
-
-
         <Route path="/login" element={
           <PageLayout>
-            < Login />
+            <Login />
           </PageLayout>
         } />
-
+        <Route path="/profile" element={
+          <PageLayout>
+            <Profile />
+          </PageLayout>
+        } />
       </Routes>
     </AnimatePresence>
   );
 }
+
 
 function App() {
   return (
