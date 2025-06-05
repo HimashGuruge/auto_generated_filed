@@ -19,7 +19,11 @@ function Navbar() {
   return (
     <nav className="bg-gray-800 text-white px-6 py-4 flex justify-between items-center shadow-md animate-fadeInDown">
       <div className="text-xl font-bold text-blue-400">
-        <Link to="/" className="hover:text-blue-300 transition duration-300">
+        <Link 
+          to="/" 
+          className="hover:text-blue-300 transition duration-300"
+          onClick={() => window.scrollTo(0, 0)} // Optional: Scroll to top on click
+        >
           MyApp
         </Link>
       </div>
