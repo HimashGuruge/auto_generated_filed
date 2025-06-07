@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { motion } from "framer-motion";
 
 function AddUser() {
+  // State declarations
   const [formData, setFormData] = useState({
     username: "",
     name: "",
@@ -10,16 +12,12 @@ function AddUser() {
     role: "user",
   });
 
-  const [submitting, setSubmitting] = useState(false); // form submit loading
-  const [initialLoading, setInitialLoading] = useState(true); // page load delay
+  const [submitting, setSubmitting] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
-    // Delay to avoid blank screen during animation
-    const timer = setTimeout(() => {
-      setInitialLoading(false);
-    }, 200); // 200ms smooth transition delay
-
+    const timer = setTimeout(() => setInitialLoading(false), 200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -37,8 +35,7 @@ function AddUser() {
     setMessage(null);
 
     try {
-      // Artificial delay 1.5 seconds to keep spinner visible
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500)); // artificial delay
 
       const response = await axios.post("http://localhost:3000/users", formData);
       setMessage({ type: "success", text: response.data.message || "User added successfully!" });
@@ -54,138 +51,192 @@ function AddUser() {
     }
   };
 
-  // Initial page load skeleton
   if (initialLoading) {
     return (
-      <div className="max-w-md mx-auto mt-8 p-6">
-        <div className="space-y-4 animate-pulse">
-          <div className="h-6 bg-gray-300 rounded w-1/3" />
-          <div className="h-10 bg-gray-200 rounded" />
-          <div className="h-10 bg-gray-200 rounded" />
-          <div className="h-10 bg-gray-200 rounded" />
-          <div className="h-10 bg-gray-200 rounded" />
-          <div className="h-10 bg-gray-200 rounded" />
-          <div className="h-10 bg-blue-300 rounded" />
-        </div>
+      <div className="max-w-md mx-auto mt-12 p-6 text-center text-gray-600 font-medium">
+        Loading...
       </div>
     );
   }
 
+  // Motion variants for inputs
+  const inputVariants = {
+    focused: {
+      scale: 1.03,
+      boxShadow: "0 0 8px rgba(59, 130, 246, 0.6)", // blue glow
+      transition: { type: "spring", stiffness: 300, damping: 20 },
+    },
+    unfocused: {
+      scale: 1,
+      boxShadow: "none",
+      transition: { type: "spring", stiffness: 300, damping: 20 },
+    },
+  };
+
   return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded shadow mt-8">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Add New User</h2>
+    <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-12 font-sans text-gray-900">
+      <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700">
+        Add New User
+      </h2>
 
       {message && (
         <div
-          className={`mb-4 p-3 rounded ${
+          className={`mb-6 px-4 py-3 rounded-lg text-center font-semibold ${
             message.type === "success"
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
+              ? "bg-green-100 text-green-800 border border-green-300"
+              : "bg-red-100 text-red-800 border border-red-300"
           }`}
+          role="alert"
         >
           {message.text}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        <div>
-          <label className="block mb-1 font-medium text-gray-700">Username</label>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            placeholder="Enter username"
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        {[
+          {
+            label: "Username",
+            name: "username",
+            type: "text",
+            placeholder: "Enter username",
+            required: true,
+          },
+          {
+            label: "Name",
+            name: "name",
+            type: "text",
+            placeholder: "Enter full name",
+            required: true,
+          },
+          {
+            label: "Email",
+            name: "email",
+            type: "email",
+            placeholder: "Enter email",
+            required: true,
+          },
+          {
+            label: "Age",
+            name: "age",
+            type: "number",
+            placeholder: "Enter age (optional)",
+            required: false,
+            min: 0,
+          },
+        ].map(({ label, name, type, placeholder, required, min }) => (
+          <motion.div
+            key={name}
+            initial="unfocused"
+            whileFocus="focused"
+            animate="unfocused"
+          >
+            <label
+              htmlFor={name}
+              className="block mb-2 text-sm font-semibold text-gray-700"
+            >
+              {label}
+            </label>
+            <motion.input
+              id={name}
+              type={type}
+              name={name}
+              value={formData[name]}
+              onChange={handleChange}
+              required={required}
+              placeholder={placeholder}
+              min={min}
+              variants={inputVariants}
+              className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none"
+              onFocus={(e) =>
+                e.currentTarget.parentElement.setAttribute("data-focused", "true")
+              }
+              onBlur={(e) =>
+                e.currentTarget.parentElement.removeAttribute("data-focused")
+              }
+              autoComplete="off"
+            />
+          </motion.div>
+        ))}
 
-        <div>
-          <label className="block mb-1 font-medium text-gray-700">Name</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            placeholder="Enter full name"
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium text-gray-700">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            placeholder="Enter email"
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium text-gray-700">Age</label>
-          <input
-            type="number"
-            name="age"
-            value={formData.age}
-            onChange={handleChange}
-            min="0"
-            placeholder="Enter age (optional)"
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium text-gray-700">Role</label>
-          <select
+        <motion.div
+          initial="unfocused"
+          whileFocus="focused"
+          animate="unfocused"
+          className="mb-6"
+        >
+          <label
+            htmlFor="role"
+            className="block mb-2 text-sm font-semibold text-gray-700"
+          >
+            Role
+          </label>
+          <motion.select
+            id="role"
             name="role"
             value={formData.role}
             onChange={handleChange}
             required
-            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            variants={inputVariants}
+            className="w-full border border-gray-300 rounded-md px-4 py-3 text-gray-900 focus:outline-none"
+            onFocus={(e) =>
+              e.currentTarget.parentElement.setAttribute("data-focused", "true")
+            }
+            onBlur={(e) =>
+              e.currentTarget.parentElement.removeAttribute("data-focused")
+            }
           >
             <option value="user">User</option>
             <option value="admin">Admin</option>
             <option value="manager">Manager</option>
-          </select>
-        </div>
+          </motion.select>
+        </motion.div>
 
-        <button
+        <motion.button
           type="submit"
           disabled={submitting}
-          className={`w-full bg-blue-600 text-white font-semibold py-2 rounded hover:bg-blue-700 transition flex justify-center items-center ${
-            submitting ? "opacity-60 cursor-not-allowed" : ""
-          }`}
+          className={`w-full bg-blue-600 text-white font-semibold py-3 rounded-md flex justify-center items-center shadow-md ${
+            submitting ? "opacity-60 cursor-not-allowed" : "hover:bg-blue-700"
+          } transition-colors duration-200`}
+          whileHover={submitting ? {} : { scale: 1.05 }}
+          whileTap={submitting ? {} : { scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
           {submitting && (
-            <svg
-              className="animate-spin mr-2 h-5 w-5 text-white"
+            <motion.svg
+              animate={{ rotate: 360 }}
+              transition={{
+                repeat: Infinity,
+                ease: "linear",
+                duration: 1,
+              }}
+              className="mr-3 h-5 w-5 text-white"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
+              aria-label="Loading spinner"
+              style={{ originX: 0.5, originY: 0.5 }}
             >
-              <circle
+              <motion.circle
                 className="opacity-25"
                 cx="12"
                 cy="12"
                 r="10"
                 stroke="currentColor"
                 strokeWidth="4"
+                transformBox="fill-box"
+                transformOrigin="center"
               />
-              <path
+              <motion.path
                 className="opacity-75"
                 fill="currentColor"
                 d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                transformBox="fill-box"
+                transformOrigin="center"
               />
-            </svg>
+            </motion.svg>
           )}
           {submitting ? "Adding..." : "Add User"}
-        </button>
+        </motion.button>
       </form>
     </div>
   );

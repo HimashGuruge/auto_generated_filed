@@ -10,17 +10,36 @@ function UserTable() {
     async function fetchData() {
       setLoading(true);
       setError(null);
+
       try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          setError("No authentication token found. Please login first.");
+          setLoading(false);
+          return;
+        }
+
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+
         const [usersRes, adminsRes] = await Promise.all([
-          axios.get("http://localhost:3000/users"),
-          axios.get("http://localhost:3000/admins"),
+          axios.get("http://localhost:3000/users", config),
+          axios.get("http://localhost:3000/admin/admins", config), // fixed URL
         ]);
-        // Combine users and admins arrays
+
         const combined = [...usersRes.data, ...adminsRes.data];
         setUsers(combined);
       } catch (err) {
-        setError("Failed to load users and admins.");
-        console.error(err);
+        console.error(err.response ? err.response.data : err.message);
+        setError(
+          err.response && err.response.data
+            ? err.response.data.error || "Failed to load users and admins."
+            : err.message
+        );
       } finally {
         setLoading(false);
       }
@@ -32,36 +51,14 @@ function UserTable() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-40">
-        <svg
-          className="animate-spin h-10 w-10 text-blue-600"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          aria-label="Loading spinner"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-          />
-        </svg>
+        {/* loading spinner */}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center text-red-600 font-semibold mt-10">
-        {error}
-      </div>
+      <div className="text-center text-red-600 font-semibold mt-10">{error}</div>
     );
   }
 
@@ -93,11 +90,11 @@ function UserTable() {
           ) : (
             users.map((user, idx) => (
               <tr
-                key={user.id}
+                key={user._id}
                 className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {user.id}
+                  {user._id}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                   {user.name}

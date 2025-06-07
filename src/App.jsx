@@ -35,9 +35,9 @@ function AnimatedRoutes() {
           </PageLayout>
         } />
         <Route path="/admin/*" element={
-          <PageLayout>
+          
             <AdminDashboard />
-          </PageLayout>
+         
         } />
         <Route path="/register/" element={
           <PageLayout>

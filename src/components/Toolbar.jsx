@@ -3,11 +3,15 @@ import { Link, useLocation } from 'react-router-dom';
 function Navbar() {
   const location = useLocation();
 
+  // Parse user info from localStorage (or null if none)
+  const user = JSON.parse(localStorage.getItem('user'));
+
   const navItems = [
     { path: '/', label: 'Home', exact: true },
     { path: '/register', label: 'Register', exact: true },
     { path: '/login', label: 'Login', exact: true },
-    { path: '/admin', label: 'Admin', exact: false },
+    // Only show Admin link if user exists and is admin
+    ...(user && user.role === 'admin' ? [{ path: '/admin', label: 'Admin', exact: false }] : []),
   ];
 
   const checkActive = (path, exact) => {
@@ -17,12 +21,12 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-gray-800 text-white px-6 py-4 flex justify-between items-center shadow-md animate-fadeInDown">
+    <nav className="bg-gray-800 text-white px-6 py-4 flex justify-between items-center shadow-md sticky top-0 z-50">
       <div className="text-xl font-bold text-blue-400">
         <Link 
           to="/" 
           className="hover:text-blue-300 transition duration-300"
-          onClick={() => window.scrollTo(0, 0)} // Optional: Scroll to top on click
+          onClick={() => window.scrollTo(0, 0)} 
         >
           MyApp
         </Link>

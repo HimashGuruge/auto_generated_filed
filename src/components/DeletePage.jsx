@@ -15,23 +15,46 @@ function UserTable() {
     role: 'user',
   });
 
+  // Retrieve JWT token once here
+  const token = localStorage.getItem('token');
+
+  // Axios config with Authorization header
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
   const fetchUsers = async () => {
     setLoading(true);
     setError(null);
     try {
-      const usersRes = await axios.get('http://localhost:3000/users');
-      const adminsRes = await axios.get('http://localhost:3000/admins');
+      if (!token) {
+        setError('You must be logged in.');
+        setLoading(false);
+        return;
+      }
+      // Note: Changed admins endpoint to '/admin/admins'
+      const [usersRes, adminsRes] = await Promise.all([
+        axios.get('http://localhost:3000/users', config),
+        axios.get('http://localhost:3000/admin/admins', config), // FIXED here
+      ]);
       setUsers([...usersRes.data, ...adminsRes.data]);
     } catch (err) {
       setError('Failed to fetch users.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    if (!token) {
+      setError('You must be logged in.');
+      return;
+    }
     fetchUsers();
-  }, []);
+  }, [token]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
@@ -40,10 +63,11 @@ function UserTable() {
     setError(null);
 
     try {
-      await axios.delete(`http://localhost:3000/users/${id}`);
+      await axios.delete(`http://localhost:3000/users/${id}`, config);
       setUsers((prev) => prev.filter((user) => user._id !== id));
     } catch (err) {
       setError('Failed to delete user.');
+      console.error(err);
     } finally {
       setDeletingId(null);
     }
@@ -52,11 +76,11 @@ function UserTable() {
   const startEditing = (user) => {
     setEditingId(user._id);
     setEditForm({
-      username: user.username,
-      name: user.name,
-      email: user.email,
-      age: user.age || '',
-      role: user.role,
+      username: user.username || '',
+      name: user.name || '',
+      email: user.email || '',
+      age: user.age !== undefined && user.age !== null ? user.age : '',
+      role: user.role || 'user',
     });
   };
 
@@ -69,7 +93,7 @@ function UserTable() {
     const { name, value } = e.target;
     setEditForm((prev) => ({
       ...prev,
-      [name]: name === 'age' && value !== '' ? Number(value) : value,
+      [name]: name === 'age' ? (value === '' ? '' : Number(value)) : value,
     }));
   };
 
@@ -78,17 +102,27 @@ function UserTable() {
     setError(null);
 
     try {
-      const res = await axios.put(`http://localhost:3000/users/${editingId}`, editForm);
+      // Clean data to avoid sending empty string for age
+      const payload = {
+        ...editForm,
+        age: editForm.age === '' ? null : editForm.age,
+      };
+
+      const res = await axios.put(
+        `http://localhost:3000/users/${editingId}`,
+        payload,
+        config
+      );
       setUsers((prev) =>
         prev.map((user) => (user._id === editingId ? res.data.user : user))
       );
       cancelEditing();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update user.');
+      console.error(err);
     }
   };
 
-  // Replace loading text with Tailwind spinner
   if (loading)
     return (
       <div className="flex justify-center items-center h-40">
@@ -116,11 +150,12 @@ function UserTable() {
       </div>
     );
 
-  if (error) return <p className="text-red-600">{error}</p>;
-
   return (
     <div className="max-w-5xl mx-auto mt-8 p-4 bg-white rounded shadow">
       <h2 className="text-2xl font-bold mb-4">Users List</h2>
+
+      {error && <p className="mb-4 text-red-600">{error}</p>}
+
       {users.length === 0 ? (
         <p>No users found.</p>
       ) : (
@@ -146,6 +181,7 @@ function UserTable() {
                       value={editForm.username}
                       onChange={handleEditChange}
                       className="w-full border rounded px-2 py-1"
+                      key="username-input"
                     />
                   </td>
                   <td className="border border-gray-300 p-2">
@@ -155,6 +191,7 @@ function UserTable() {
                       value={editForm.name}
                       onChange={handleEditChange}
                       className="w-full border rounded px-2 py-1"
+                      key="name-input"
                     />
                   </td>
                   <td className="border border-gray-300 p-2">
@@ -164,6 +201,7 @@ function UserTable() {
                       value={editForm.email}
                       onChange={handleEditChange}
                       className="w-full border rounded px-2 py-1"
+                      key="email-input"
                     />
                   </td>
                   <td className="border border-gray-300 p-2">
@@ -174,6 +212,7 @@ function UserTable() {
                       value={editForm.age}
                       onChange={handleEditChange}
                       className="w-full border rounded px-2 py-1"
+                      key="age-input"
                     />
                   </td>
                   <td className="border border-gray-300 p-2">
@@ -182,6 +221,7 @@ function UserTable() {
                       value={editForm.role}
                       onChange={handleEditChange}
                       className="w-full border rounded px-2 py-1"
+                      key="role-select"
                     >
                       <option value="user">User</option>
                       <option value="admin">Admin</option>
@@ -221,7 +261,9 @@ function UserTable() {
                       onClick={() => handleDelete(user._id)}
                       disabled={deletingId === user._id}
                       className={`px-3 py-1 rounded text-white ${
-                        deletingId === user._id ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'
+                        deletingId === user._id
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-red-600 hover:bg-red-700'
                       }`}
                     >
                       {deletingId === user._id ? 'Deleting...' : 'Delete'}
