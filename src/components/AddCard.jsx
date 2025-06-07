@@ -9,16 +9,26 @@ function AddCard() {
     e.preventDefault();
     setMessage("");
 
+    const token = localStorage.getItem("token");  // Token එක ලබා ගන්න
+
+    if (!token) {
+      setMessage("Login කරලා token එක ලබා ගන්න.");
+      return;
+    }
+
     try {
-      // මෙතනට ඔයාගේ backend API url එක දාන්න
-      const response = await fetch("/api/cards", {
+      const response = await fetch("http://localhost:3000/addcards", { // Backend URL එක
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ title, description }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add card");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to add card");
       }
 
       setMessage("Card added successfully!");
