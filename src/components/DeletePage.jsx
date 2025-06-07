@@ -13,6 +13,7 @@ function UserTable() {
     email: '',
     age: '',
     role: 'user',
+    password: '', // added password field
   });
 
   // Retrieve JWT token once here
@@ -37,7 +38,7 @@ function UserTable() {
       // Note: Changed admins endpoint to '/admin/admins'
       const [usersRes, adminsRes] = await Promise.all([
         axios.get('http://localhost:3000/users', config),
-        axios.get('http://localhost:3000/admin/admins', config), // FIXED here
+        axios.get('http://localhost:3000/admin/admins', config),
       ]);
       setUsers([...usersRes.data, ...adminsRes.data]);
     } catch (err) {
@@ -81,12 +82,13 @@ function UserTable() {
       email: user.email || '',
       age: user.age !== undefined && user.age !== null ? user.age : '',
       role: user.role || 'user',
+      password: '', // always start with empty password
     });
   };
 
   const cancelEditing = () => {
     setEditingId(null);
-    setEditForm({ username: '', name: '', email: '', age: '', role: 'user' });
+    setEditForm({ username: '', name: '', email: '', age: '', role: 'user', password: '' });
   };
 
   const handleEditChange = (e) => {
@@ -102,11 +104,18 @@ function UserTable() {
     setError(null);
 
     try {
-      // Clean data to avoid sending empty string for age
+      // Prepare payload, include password only if not empty
       const payload = {
-        ...editForm,
+        username: editForm.username,
+        name: editForm.name,
+        email: editForm.email,
         age: editForm.age === '' ? null : editForm.age,
+        role: editForm.role,
       };
+
+      if (editForm.password.trim() !== '') {
+        payload.password = editForm.password;
+      }
 
       const res = await axios.put(
         `http://localhost:3000/users/${editingId}`,
@@ -167,6 +176,7 @@ function UserTable() {
               <th className="border border-gray-300 p-2 text-left">Email</th>
               <th className="border border-gray-300 p-2 text-left">Age</th>
               <th className="border border-gray-300 p-2 text-left">Role</th>
+              <th className="border border-gray-300 p-2 text-left">Password</th> {/* Added Password header */}
               <th className="border border-gray-300 p-2 text-center">Actions</th>
             </tr>
           </thead>
@@ -228,6 +238,17 @@ function UserTable() {
                       <option value="manager">Manager</option>
                     </select>
                   </td>
+                  <td className="border border-gray-300 p-2">
+                    <input
+                      type="password"
+                      name="password"
+                      value={editForm.password}
+                      onChange={handleEditChange}
+                      placeholder="New password"
+                      className="w-full border rounded px-2 py-1"
+                      key="password-input"
+                    />
+                  </td>
                   <td className="border border-gray-300 p-2 text-center space-x-2">
                     <button
                       onClick={handleUpdate}
@@ -250,6 +271,7 @@ function UserTable() {
                   <td className="border border-gray-300 p-2">{user.email}</td>
                   <td className="border border-gray-300 p-2">{user.age ?? '-'}</td>
                   <td className="border border-gray-300 p-2 capitalize">{user.role}</td>
+                  <td className="border border-gray-300 p-2">••••••••</td> {/* Hide password in non-edit mode */}
                   <td className="border border-gray-300 p-2 text-center space-x-2">
                     <button
                       onClick={() => startEditing(user)}

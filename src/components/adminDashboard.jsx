@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
+import AddCard from "../components/AddCard.jsx";  // AddCard import
 import UserList from "../components/UserList.jsx";
 import AddUser from "../components/Adduser.jsx";
 import Delete from "../components/DeletePage.jsx";
@@ -37,7 +38,7 @@ function AdminDashboard() {
     navigate("/login");
   };
 
-  // Check if token exists (simple auth guard)
+  // Simple auth guard
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -45,9 +46,11 @@ function AdminDashboard() {
     }
   }, [navigate]);
 
+  // Sidebar navigation items (AddCard එකත් එකතු කරලා)
   const navItems = [
     { path: "users", icon: <FiUsers className="mr-2" />, label: "User List" },
     { path: "add-user", icon: <FiUserPlus className="mr-2" />, label: "Add User" },
+    { path: "add-card", icon: <FiUserPlus className="mr-2" />, label: "Add Card" },  // <-- New AddCard link
     { path: "settings", icon: <FiSettings className="mr-2" />, label: "Settings" },
   ];
 
@@ -131,6 +134,20 @@ function AdminDashboard() {
                     transition={{ duration: 0.3 }}
                   >
                     <AddUser />
+                  </motion.div>
+                }
+              />
+              <Route
+                path="add-card"
+                element={
+                  <motion.div
+                    variants={variants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    transition={{ duration: 0.3 }}
+                  >
+                    <AddCard />
                   </motion.div>
                 }
               />
