@@ -1,4 +1,3 @@
-// Login.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -6,6 +5,7 @@ import toast, { Toaster } from 'react-hot-toast';
 
 function Login() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');  // <-- password state added
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -15,10 +15,14 @@ function Login() {
       toast.error('Please enter your email.');
       return;
     }
+    if (!password) {
+      toast.error('Please enter your password.');
+      return;
+    }
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:3000/login', { email });
+      const response = await axios.post('http://localhost:3000/login', { email, password });  // <-- send password
 
       if (response.status === 200) {
         const { user, token } = response.data;
@@ -51,6 +55,7 @@ function Login() {
         className="bg-white shadow-md rounded-2xl px-8 pt-8 pb-10 w-full max-w-sm"
       >
         <h2 className="text-2xl font-semibold mb-6 text-center text-gray-800">Login</h2>
+
         <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="email">
           Email
         </label>
@@ -61,8 +66,23 @@ function Login() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
           required
+          className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+
+        {/* Password Field */}
+        <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="password">
+          Password
+        </label>
+        <input
+          type="password"
+          id="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter your password"
+          required
           className="w-full px-4 py-2 mb-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+
         <button
           type="submit"
           disabled={loading}

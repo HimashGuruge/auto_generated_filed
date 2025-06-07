@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { debounce } from 'lodash';
+import { useNavigate } from 'react-router-dom';
 
 const RegisterForm = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     username: '',
     name: '',
     email: '',
-    age: ''
+    age: '',
+    password: '',
   });
 
   const [success, setSuccess] = useState('');
@@ -69,7 +73,7 @@ const RegisterForm = () => {
         setFormData(prev => ({ ...prev, username: suggestions[0] }));
       }
     }
-  }, [formData.name, generateUsernames]); // suggestedUsernames remove කරලා dependency list එකෙන් (avoid infinite loop)
+  }, [formData.name, generateUsernames]);
 
   // email වෙනස්වීම check කරන්න
   useEffect(() => {
@@ -79,7 +83,6 @@ const RegisterForm = () => {
       setEmailStatus({ loading: false, exists: false, valid: true });
     }
 
-    // Cleanup debounce on unmount or email change
     return () => checkEmailExists.cancel();
   }, [formData.email, checkEmailExists]);
 
@@ -116,6 +119,12 @@ const RegisterForm = () => {
       return;
     }
 
+    // Password validation
+    if (!formData.password || formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:3000/users', {
         method: 'POST',
@@ -124,7 +133,8 @@ const RegisterForm = () => {
           username: formData.username,
           name: formData.name,
           email: formData.email,
-          age: formData.age ? Number(formData.age) : undefined
+          age: formData.age ? Number(formData.age) : undefined,
+          password: formData.password,
         })
       });
 
@@ -133,9 +143,13 @@ const RegisterForm = () => {
       if (!response.ok) throw new Error(data.error || 'Failed to register user');
 
       setSuccess('✅ User registered successfully!');
-      setFormData({ username: '', name: '', email: '', age: '' });
+      setFormData({ username: '', name: '', email: '', age: '', password: '' });
       setSuggestedUsernames([]);
       setEmailStatus({ loading: false, exists: false, valid: true });
+
+      // Redirect to login page after success
+      navigate('/login');
+
     } catch (err) {
       setError(err.message);
     }
@@ -196,30 +210,39 @@ const RegisterForm = () => {
           </div>
 
           {/* Email */}
-         {/* Email */}
-<div className="relative">
-  <input
-    type="email"
-    name="email"
-    placeholder="Email Address"
-    value={formData.email}
-    onChange={handleChange}
-    required
-    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-      emailStatus.exists || !emailStatus.valid
-        ? 'border-red-500 focus:ring-red-400 bg-red-50'
-        : formData.email && !emailStatus.exists && emailStatus.valid
-          ? 'border-green-500 focus:ring-green-400 bg-green-50'
-          : 'focus:ring-blue-400'
-    }`}
-  />
-  {emailStatus.loading && (
-    <div className="absolute right-3 top-2.5">
-      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
-    </div>
-  )}
-</div>
+          <div className="relative">
+            <input
+              type="email"
+              name="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                emailStatus.exists || !emailStatus.valid
+                  ? 'border-red-500 focus:ring-red-400 bg-red-50'
+                  : formData.email && !emailStatus.exists && emailStatus.valid
+                    ? 'border-green-500 focus:ring-green-400 bg-green-50'
+                    : 'focus:ring-blue-400'
+              }`}
+            />
+            {emailStatus.loading && (
+              <div className="absolute right-3 top-2.5">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
+              </div>
+            )}
+          </div>
 
+          {/* Password */}
+          <input
+            type="password"
+            name="password"
+            placeholder="Password (min 6 characters)"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
 
           {/* Age */}
           <input
