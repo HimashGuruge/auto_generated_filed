@@ -1,46 +1,49 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+// src/pages/AddCardList.jsx
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
-function HomePage() {
-  const navigate = useNavigate();
+function AddCardList() {
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem('token'); // assuming you store JWT in localStorage
+
+  useEffect(() => {
+    const fetchCards = async () => {
+      try {
+        const res = await axios.get('http://localhost:3000/addcards', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setCards(res.data);
+      } catch (error) {
+        console.error('Error fetching AddCards:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCards();
+  }, []);
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <section className="max-w-3xl w-full grid grid-cols-1 sm:grid-cols-2 gap-8">
-        {/* User List Card */}
-        <div
-          onClick={() => navigate('/users')}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => { if(e.key === 'Enter' || e.key === ' ') navigate('/users'); }}
-          className="cursor-pointer bg-white rounded-lg shadow-lg p-10 flex flex-col items-center justify-center
-                     hover:shadow-2xl hover:scale-[1.03] transition-transform duration-300 focus:outline-none focus:ring-4 focus:ring-blue-300"
-          aria-label="Navigate to User List"
-        >
-          <h2 className="text-3xl font-bold text-blue-700 mb-4">View Users</h2>
-          <p className="text-gray-600 text-center">
-            Manage your users easily by viewing, editing, and deleting user accounts.
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-4xl font-bold mb-6 text-center text-blue-800">All Add Cards</h1>
 
-        {/* About Page Card */}
-        <div
-          onClick={() => navigate('/about')}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => { if(e.key === 'Enter' || e.key === ' ') navigate('/about'); }}
-          className="cursor-pointer bg-white rounded-lg shadow-lg p-10 flex flex-col items-center justify-center
-                     hover:shadow-2xl hover:scale-[1.03] transition-transform duration-300 focus:outline-none focus:ring-4 focus:ring-gray-400"
-          aria-label="Navigate to About Page"
-        >
-          <h2 className="text-3xl font-bold text-gray-700 mb-4">About</h2>
-          <p className="text-gray-600 text-center">
-            Learn more about this User Management System and its features.
-          </p>
+      {loading ? (
+        <p className="text-center">Loading...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {cards.map((card) => (
+            <div key={card._id} className="bg-white shadow-md rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">{card.title}</h2>
+              <p className="text-gray-600">{card.description}</p>
+            </div>
+          ))}
         </div>
-      </section>
-    </main>
+      )}
+    </div>
   );
 }
 
-export default HomePage;
+export default AddCardList;
