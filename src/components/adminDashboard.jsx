@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { Link, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
-import AddCard from "../components/AddCard.jsx";  // AddCard import
+// Components
+import AddCard from "../components/AddCard.jsx";
 import UserList from "../components/UserList.jsx";
 import AddUser from "../components/Adduser.jsx";
 import Delete from "../components/DeletePage.jsx";
 
+// Icons
 import {
   FiUsers,
   FiUserPlus,
@@ -15,6 +17,7 @@ import {
   FiHome,
 } from "react-icons/fi";
 
+// Animation variants
 const variants = {
   initial: { opacity: 0, x: 20 },
   animate: { opacity: 1, x: 0 },
@@ -23,34 +26,53 @@ const variants = {
 
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("users");
+  const [user, setUser] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Get token from localStorage
+  const token = localStorage.getItem("token");
+
+  // Set active tab based on URL
   useEffect(() => {
     const currentTab = location.pathname.split("/").pop();
     setActiveTab(currentTab);
   }, [location]);
 
-  // Logout handler - clear token & user and redirect to login
+  // Set user data
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  // Debugging: Show token in console
+  useEffect(() => {
+    if (token) {
+      console.log("JWT Token in AdminDashboard:", token);
+    }
+  }, [token]);
+
+  // Protect route: Redirect to login if no token
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+    }
+  }, [token, navigate]);
+
+  // Logout handler
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");
   };
 
-  // Simple auth guard
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-    }
-  }, [navigate]);
-
-  // Sidebar navigation items (AddCard එකත් එකතු කරලා)
+  // Sidebar navigation items
   const navItems = [
     { path: "users", icon: <FiUsers className="mr-2" />, label: "User List" },
     { path: "add-user", icon: <FiUserPlus className="mr-2" />, label: "Add User" },
-    { path: "add-card", icon: <FiUserPlus className="mr-2" />, label: "Add Card" },  // <-- New AddCard link
+    { path: "add-card", icon: <FiUserPlus className="mr-2" />, label: "Add Card" },
     { path: "settings", icon: <FiSettings className="mr-2" />, label: "Settings" },
   ];
 
@@ -85,10 +107,16 @@ function AdminDashboard() {
           ))}
         </nav>
 
+        {/* Show logged-in user name */}
         <div className="p-4 border-t border-gray-700">
+          {user && (
+            <p className="text-xs text-gray-400 mb-1">Logged in as</p>
+          )}
+          <p className="text-white font-medium">{user?.name || 'Admin'}</p>
+
           <button
             onClick={handleLogout}
-            className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md"
+            className="mt-3 flex items-center w-full px-3 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-700 rounded-md"
           >
             <FiLogOut className="mr-2" />
             Logout
@@ -119,7 +147,7 @@ function AdminDashboard() {
                     exit="exit"
                     transition={{ duration: 0.3 }}
                   >
-                    <UserList />
+                    <UserList token={token} />
                   </motion.div>
                 }
               />
@@ -133,7 +161,7 @@ function AdminDashboard() {
                     exit="exit"
                     transition={{ duration: 0.3 }}
                   >
-                    <AddUser />
+                    <AddUser token={token} />
                   </motion.div>
                 }
               />
@@ -147,7 +175,7 @@ function AdminDashboard() {
                     exit="exit"
                     transition={{ duration: 0.3 }}
                   >
-                    <AddCard />
+                    <AddCard token={token} />
                   </motion.div>
                 }
               />
@@ -161,7 +189,7 @@ function AdminDashboard() {
                     exit="exit"
                     transition={{ duration: 0.3 }}
                   >
-                    <Delete />
+                    <Delete token={token} />
                   </motion.div>
                 }
               />

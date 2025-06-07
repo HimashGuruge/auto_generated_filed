@@ -1,47 +1,56 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-function Login() {
+const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');  // <-- password state added
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email) {
-      toast.error('Please enter your email.');
-      return;
-    }
-    if (!password) {
-      toast.error('Please enter your password.');
+
+    if (!email || !password) {
+      toast.error('Please fill all fields');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:3000/login', { email, password });  // <-- send password
+      const res = await fetch('http://localhost:3000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (response.status === 200) {
-        const { user, token } = response.data;
+      const data = await res.json();
 
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
+      if (res.ok) {
+        // Token සහ user data localStorage එකට save කරන්න
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
 
         toast.success('Login successful! Redirecting...');
 
+        // parent component එකට token pass කරන්න
+        if (onLogin) onLogin(data.token);
+
+        // user role එක අනුව redirect කරන්න
         setTimeout(() => {
-          if (user.role === 'admin') {
-            navigate('/admin');  // Redirect admins
+          if (data.user.role === 'admin') {
+            navigate('/admin');
           } else {
-            navigate('/profile'); // Redirect other users
+            navigate('/profile');
           }
         }, 1500);
+      } else {
+        toast.error(data.error || 'Login failed');
       }
-    } catch (error) {
-      toast.error('Login failed: ' + (error.response?.data?.error || 'Unknown error'));
+    } catch (err) {
+      toast.error('Login error: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -51,7 +60,7 @@ function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <Toaster position="top-right" reverseOrder={false} />
       <form
-        onSubmit={handleLogin}
+        onSubmit={handleSubmit}
         className="bg-white shadow-md rounded-2xl px-8 pt-8 pb-10 w-full max-w-sm"
       >
         <h2 className="text-2xl font-semibold mb-6 text-center text-gray-800">Login</h2>
@@ -60,8 +69,8 @@ function Login() {
           Email
         </label>
         <input
-          type="email"
           id="email"
+          type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
@@ -69,13 +78,12 @@ function Login() {
           className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
-        {/* Password Field */}
         <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="password">
           Password
         </label>
         <input
-          type="password"
           id="password"
+          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"
@@ -95,6 +103,6 @@ function Login() {
       </form>
     </div>
   );
-}
+};
 
 export default Login;

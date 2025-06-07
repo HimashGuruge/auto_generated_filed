@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
+
 // Components
 import Toolbar from "./components/Toolbar.jsx";
 import Home from "./components/Home.jsx";
