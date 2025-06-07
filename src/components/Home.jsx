@@ -4,28 +4,26 @@ import axios from 'axios';
 function AddCardList() {
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   const baseUrl = 'http://localhost:3000';
 
+  // Load saved dark mode preference
+  useEffect(() => {
+    const savedMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(savedMode);
+  }, []);
+
+  // Fetch cards from backend
   useEffect(() => {
     const fetchCards = async () => {
+      const token = localStorage.getItem('token');
       try {
-        // Get token from localStorage (or wherever you store it)
-        const token = localStorage.getItem('token');
-
-        // Send token in Authorization header
         const res = await axios.get(`${baseUrl}/addcard`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        console.log('Fetched cards:', res.data); // Debug log
         setCards(res.data);
-      } catch (error) {
-        console.error('Error fetching cards:', error.message);
-        if (error.response) {
-          console.error('Server responded with:', error.response.status, error.response.data);
-        } else if (error.request) {
-          console.error('No response received from server');
-        }
+      } catch (err) {
+        console.error('Error fetching cards:', err);
       } finally {
         setLoading(false);
       }
@@ -34,35 +32,71 @@ function AddCardList() {
     fetchCards();
   }, []);
 
+  // Toggle dark mode and save preference
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem('darkMode', newMode);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6 relative overflow-x-hidden">
-      <h1 className="text-4xl font-bold mb-6 text-center text-blue-800">All Add Cards</h1>
+    <main className={`p-6 min-h-screen ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-800'}`}>
+      
+      {/* Dark Mode Toggle */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={toggleDarkMode}
+          className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 ${
+            darkMode ? 'bg-gray-700 text-yellow-300' : 'bg-gray-200 text-gray-800'
+          }`}
+        >
+          {darkMode ? (
+            <>
+              ☀️ Light Mode
+            </>
+          ) : (
+            <>
+              🌙 Dark Mode
+            </>
+          )}
+        </button>
+      </div>
+
+      <h1 className="text-4xl font-bold text-center mb-6">
+        All Add Cards
+      </h1>
 
       {loading ? (
-        <p className="text-center z-10 relative">Loading...</p>
+        <p className="text-center">Loading...</p>
       ) : cards.length === 0 ? (
-        <p className="text-center text-gray-500 z-10 relative">No cards found.</p>
+        <p className="text-center">No cards found.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 z-10 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {cards.map((card) => (
             <div
               key={card._id}
-              className="bg-white shadow-md rounded-lg p-6 cursor-pointer relative"
+              className={`rounded-lg shadow-lg overflow-hidden transform hover:scale-105 transition duration-300 ${
+                darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'
+              }`}
             >
               {card.image && (
                 <img
-                  src={card.image.startsWith('http') ? card.image : `${baseUrl}${card.image}?t=${Date.now()}`}
+                  src={card.image.startsWith('http') ? card.image : `${baseUrl}${card.image}`}
                   alt={card.title}
-                  className="w-full h-48 object-cover rounded-md mb-4"
+                  className="w-full h-48 object-cover"
                 />
               )}
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">{card.title}</h2>
-              <p className="text-gray-600">{card.description}</p>
+              <div className="p-4">
+                <h2 className="text-xl font-semibold mb-2">{card.title}</h2>
+                <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {card.description}
+                </p>
+              </div>
             </div>
           ))}
         </div>
       )}
-    </div>
+    </main>
   );
 }
 
