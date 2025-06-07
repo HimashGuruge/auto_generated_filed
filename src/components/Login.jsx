@@ -17,6 +17,7 @@ const Login = ({ onLogin }) => {
     }
 
     setLoading(true);
+
     try {
       const res = await fetch('http://localhost:3000/login', {
         method: 'POST',
@@ -29,28 +30,22 @@ const Login = ({ onLogin }) => {
       const data = await res.json();
 
       if (res.ok) {
-        // Token සහ user data localStorage එකට save කරන්න
+        // Token & user info localStorage එකට store කරන්න
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
+        // Toast message
         toast.success('Login successful! Redirecting...');
 
-        // parent component එකට token pass කරන්න
-        if (onLogin) onLogin(data.token);
+        // ✅ Immediately redirect to /profile (no admin check)
+        navigate('/profile');
 
-        // user role එක අනුව redirect කරන්න
-        setTimeout(() => {
-          if (data.user.role === 'admin') {
-            navigate('/admin');
-          } else {
-            navigate('/profile');
-          }
-        }, 1500);
+        if (onLogin) onLogin(data.token);
       } else {
         toast.error(data.error || 'Login failed');
       }
     } catch (err) {
-      toast.error('Login error: ' + err.message);
+      toast.error(`Login error: ${err.message}`);
     } finally {
       setLoading(false);
     }

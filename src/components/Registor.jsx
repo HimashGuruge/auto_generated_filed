@@ -11,53 +11,56 @@ const RegisterForm = () => {
     email: '',
     age: '',
     password: '',
+    confirmPassword: '',
+    image: null,
+    role: 'user',
   });
 
+  const [previewImage, setPreviewImage] = useState(null);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [suggestedUsernames, setSuggestedUsernames] = useState([]);
   const [emailStatus, setEmailStatus] = useState({
     loading: false,
     exists: false,
-    valid: true
+    valid: true,
   });
 
   const isUsernameDisabled = formData.name.trim() === '';
 
-  // Username suggestions generate කිරීම
   const generateUsernames = useCallback((name) => {
     const base = name.toLowerCase().trim().replace(/\s+/g, '');
     return Array.from({ length: 3 }, () => base + (100 + Math.floor(Math.random() * 900)));
   }, []);
 
-  // Debounced email check with cleanup
   const checkEmailExists = useCallback(
     debounce(async (email) => {
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         setEmailStatus({ loading: false, exists: false, valid: false });
+        setError('Please enter a valid email address');
         return;
       }
 
+      setError('');
       setEmailStatus(prev => ({ ...prev, loading: true }));
 
       try {
         const response = await fetch(`http://localhost:3000/users/check-email?email=${encodeURIComponent(email)}`);
         const data = await response.json();
-
         setEmailStatus({
           loading: false,
           exists: data.exists,
-          valid: true
+          valid: true,
         });
       } catch (err) {
         setEmailStatus(prev => ({ ...prev, loading: false }));
+        setError('Failed to check email availability');
         console.error('Email check failed:', err);
       }
     }, 500),
     []
   );
 
-  // name වෙනස්වීමත් සමග username suggestions update කිරීම
   useEffect(() => {
     if (formData.name.trim() === '') {
       setSuggestedUsernames([]);
@@ -67,7 +70,7 @@ const RegisterForm = () => {
       setSuggestedUsernames(suggestions);
 
       if (
-        formData.username === '' || 
+        formData.username === '' ||
         suggestedUsernames.includes(formData.username)
       ) {
         setFormData(prev => ({ ...prev, username: suggestions[0] }));
@@ -75,7 +78,6 @@ const RegisterForm = () => {
     }
   }, [formData.name, generateUsernames]);
 
-  // email වෙනස්වීම check කරන්න
   useEffect(() => {
     if (formData.email) {
       checkEmailExists(formData.email);
@@ -86,29 +88,33 @@ const RegisterForm = () => {
     return () => checkEmailExists.cancel();
   }, [formData.email, checkEmailExists]);
 
-  // form fields update handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // username suggestions click handler
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    setFormData(prev => ({ ...prev, image: file }));
+    setPreviewImage(URL.createObjectURL(file));
+  };
+
   const handleUsernameClick = (username) => {
     setFormData(prev => ({ ...prev, username }));
   };
 
-  // form submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccess('');
     setError('');
 
-    // Age validation
+    // Validate age
     if (formData.age && (isNaN(formData.age) || Number(formData.age) < 0)) {
       setError('Age must be a positive number');
       return;
     }
 
+    // Validate email
     if (emailStatus.exists) {
       setError('Email already exists');
       return;
@@ -119,41 +125,69 @@ const RegisterForm = () => {
       return;
     }
 
-    // Password validation
+    // Validate password
     if (!formData.password || formData.password.length < 6) {
       setError('Password must be at least 6 characters long');
       return;
     }
 
+    // Confirm password match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     try {
+      const form = new FormData();
+      form.append('username', formData.username);
+      form.append('name', formData.name);
+      form.append('email', formData.email);
+      form.append('password', formData.password);
+      form.append('age', formData.age ? Number(formData.age) : undefined); // 👈 Convert to Number
+      form.append('role', formData.role);
+      if (formData.image) {
+        form.append('profileImage', formData.image);
+      }
+
       const response = await fetch('http://localhost:3000/users', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: formData.username,
-          name: formData.name,
-          email: formData.email,
-          age: formData.age ? Number(formData.age) : undefined,
-          password: formData.password,
-        })
+        body: form,
       });
 
       const data = await response.json();
 
-      if (!response.ok) throw new Error(data.error || 'Failed to register user');
+      if (!response.ok) throw new Error(data.message || 'Registration failed');
 
       setSuccess('✅ User registered successfully!');
-      setFormData({ username: '', name: '', email: '', age: '', password: '' });
+      setFormData({
+        username: '',
+        name: '',
+        email: '',
+        age: '',
+        password: '',
+        confirmPassword: '',
+        image: null,
+        role: 'user'
+      });
+      setPreviewImage(null);
       setSuggestedUsernames([]);
       setEmailStatus({ loading: false, exists: false, valid: true });
 
-      // Redirect to login page after success
-      navigate('/login');
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
 
     } catch (err) {
       setError(err.message);
     }
   };
+
+  // Cleanup preview URL
+  useEffect(() => {
+    return () => {
+      if (previewImage) URL.revokeObjectURL(previewImage);
+    };
+  }, [previewImage]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -169,7 +203,7 @@ const RegisterForm = () => {
             value={formData.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full px-4 py-2 border rounded-lg"
           />
 
           {/* Username */}
@@ -181,11 +215,9 @@ const RegisterForm = () => {
               onChange={handleChange}
               disabled={isUsernameDisabled}
               placeholder={isUsernameDisabled ? "Username (enter name first)" : "Username"}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400
-                ${isUsernameDisabled ? 'bg-gray-200 cursor-not-allowed' : 'bg-white cursor-text'}`}
+              className={`w-full px-4 py-2 border rounded-lg ${isUsernameDisabled ? 'bg-gray-200' : 'bg-white'}`}
               required
             />
-
             {!isUsernameDisabled && suggestedUsernames.length > 0 && (
               <div className="mt-2">
                 <p className="text-sm text-gray-600 mb-1">Suggested usernames:</p>
@@ -218,12 +250,12 @@ const RegisterForm = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+              className={`w-full px-4 py-2 border rounded-lg ${
                 emailStatus.exists || !emailStatus.valid
-                  ? 'border-red-500 focus:ring-red-400 bg-red-50'
-                  : formData.email && !emailStatus.exists && emailStatus.valid
-                    ? 'border-green-500 focus:ring-green-400 bg-green-50'
-                    : 'focus:ring-blue-400'
+                  ? 'border-red-500 bg-red-50'
+                  : formData.email && !emailStatus.exists
+                  ? 'border-green-500 bg-green-50'
+                  : ''
               }`}
             />
             {emailStatus.loading && (
@@ -241,7 +273,18 @@ const RegisterForm = () => {
             value={formData.password}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+
+          {/* Confirm Password */}
+          <input
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm Password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border rounded-lg"
           />
 
           {/* Age */}
@@ -251,11 +294,28 @@ const RegisterForm = () => {
             placeholder="Age (optional)"
             value={formData.age}
             onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full px-4 py-2 border rounded-lg"
             min="0"
           />
 
-          {/* Submit */}
+          {/* Image Upload */}
+          <div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="w-full px-4 py-2 border rounded-lg"
+            />
+            {previewImage && (
+              <img
+                src={previewImage}
+                alt="Preview"
+                className="mt-2 w-24 h-24 object-cover rounded-full mx-auto"
+              />
+            )}
+          </div>
+
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={emailStatus.exists || emailStatus.loading || !emailStatus.valid}
@@ -271,7 +331,7 @@ const RegisterForm = () => {
 
         {/* Messages */}
         {success && <p className="mt-4 text-green-600 text-center">{success}</p>}
-        {error && !emailStatus.exists && <p className="mt-4 text-red-600 text-center">{error}</p>}
+        {error && <p className="mt-4 text-red-600 text-center">{error}</p>}
       </div>
     </div>
   );

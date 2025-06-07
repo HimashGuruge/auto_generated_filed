@@ -9,10 +9,23 @@ function AddCardList() {
   useEffect(() => {
     const fetchCards = async () => {
       try {
-        const res = await axios.get(`${baseUrl}/addcard`);
+        // Get token from localStorage (or wherever you store it)
+        const token = localStorage.getItem('token');
+
+        // Send token in Authorization header
+        const res = await axios.get(`${baseUrl}/addcard`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        console.log('Fetched cards:', res.data); // Debug log
         setCards(res.data);
       } catch (error) {
-        console.error('Error fetching AddCards:', error);
+        console.error('Error fetching cards:', error.message);
+        if (error.response) {
+          console.error('Server responded with:', error.response.status, error.response.data);
+        } else if (error.request) {
+          console.error('No response received from server');
+        }
       } finally {
         setLoading(false);
       }
@@ -36,13 +49,13 @@ function AddCardList() {
               key={card._id}
               className="bg-white shadow-md rounded-lg p-6 cursor-pointer relative"
             >
-              {card.image ? (
+              {card.image && (
                 <img
                   src={card.image.startsWith('http') ? card.image : `${baseUrl}${card.image}?t=${Date.now()}`}
                   alt={card.title}
                   className="w-full h-48 object-cover rounded-md mb-4"
                 />
-              ) : null}
+              )}
               <h2 className="text-xl font-semibold text-gray-800 mb-2">{card.title}</h2>
               <p className="text-gray-600">{card.description}</p>
             </div>
