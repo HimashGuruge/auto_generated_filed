@@ -6,30 +6,37 @@ function HomePage() {
 
   return (
     <main className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <section className="max-w-3xl w-full bg-white rounded-lg shadow-lg p-10 text-center">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-8">
-          Welcome to the User Management System
-        </h1>
-        <p className="text-lg text-gray-600 mb-10">
-          Manage your users easily by viewing, editing, and deleting user accounts.
-        </p>
+      <section className="max-w-3xl w-full grid grid-cols-1 sm:grid-cols-2 gap-8">
+        {/* User List Card */}
+        <div
+          onClick={() => navigate('/users')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if(e.key === 'Enter' || e.key === ' ') navigate('/users'); }}
+          className="cursor-pointer bg-white rounded-lg shadow-lg p-10 flex flex-col items-center justify-center
+                     hover:shadow-2xl hover:scale-[1.03] transition-transform duration-300 focus:outline-none focus:ring-4 focus:ring-blue-300"
+          aria-label="Navigate to User List"
+        >
+          <h2 className="text-3xl font-bold text-blue-700 mb-4">View Users</h2>
+          <p className="text-gray-600 text-center">
+            Manage your users easily by viewing, editing, and deleting user accounts.
+          </p>
+        </div>
 
-        <div className="flex justify-center gap-6">
-          <button
-            onClick={() => navigate('/users')}
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition focus:outline-none focus:ring-4 focus:ring-blue-300"
-            aria-label="Navigate to User List"
-          >
-            View Users
-          </button>
-
-          <button
-            onClick={() => navigate('/about')}
-            className="px-8 py-3 bg-gray-600 text-white rounded-lg font-semibold shadow hover:bg-gray-700 transition focus:outline-none focus:ring-4 focus:ring-gray-400"
-            aria-label="Navigate to About Page"
-          >
-            About
-          </button>
+        {/* About Page Card */}
+        <div
+          onClick={() => navigate('/about')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if(e.key === 'Enter' || e.key === ' ') navigate('/about'); }}
+          className="cursor-pointer bg-white rounded-lg shadow-lg p-10 flex flex-col items-center justify-center
+                     hover:shadow-2xl hover:scale-[1.03] transition-transform duration-300 focus:outline-none focus:ring-4 focus:ring-gray-400"
+          aria-label="Navigate to About Page"
+        >
+          <h2 className="text-3xl font-bold text-gray-700 mb-4">About</h2>
+          <p className="text-gray-600 text-center">
+            Learn more about this User Management System and its features.
+          </p>
         </div>
       </section>
     </main>
